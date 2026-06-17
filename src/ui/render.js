@@ -236,9 +236,9 @@ function renderGate() {
           <button class="primary-button strong" type="submit">Gacha Shop 입장</button>
         </form>
         <nav class="gate-nav">
-          <a href="${ROUTES.home}">STONK Home</a>
-          <a href="${ROUTES.battle}">Battle</a>
-          <a href="${ROUTES.arcade}">Arcade</a>
+          <a href="${ROUTES.home}">홈</a>
+          <a href="${ROUTES.battle}">주식시장</a>
+          <a href="${ROUTES.arcade}">아케이드</a>
         </nav>
         ${connection === "error" ? `<p class="gate-error">연결 오류가 발생했습니다. 잠시 후 다시 시도하세요.</p>` : ""}
       </section>
@@ -273,11 +273,11 @@ function renderStatusBar(stats) {
   return `
     <header class="status-bar">
       <nav class="nav-buttons" aria-label="STONK network">
-        <a class="nav-link" href="${withRoom(ROUTES.home)}">Home</a>
-        <a class="nav-link" href="${withRoom(ROUTES.battle)}">Battle</a>
-        <a class="nav-link" href="${withRoom(ROUTES.board)}">Board</a>
-        <a class="nav-link" href="${withRoom(ROUTES.wiki)}">Wiki</a>
-        <a class="nav-link" href="${withRoom(ROUTES.arcade)}">Arcade</a>
+        <a class="nav-link" href="${withRoom(ROUTES.home)}">홈</a>
+        <a class="nav-link" href="${withRoom(ROUTES.battle)}">주식시장</a>
+        <a class="nav-link" href="${withRoom(ROUTES.board)}">주식소식</a>
+        <a class="nav-link" href="${withRoom(ROUTES.wiki)}">주식정보</a>
+        <a class="nav-link" href="${withRoom(ROUTES.arcade)}">아케이드</a>
       </nav>
       <div class="status-cluster">
         ${roomCode ? `<div class="status-metric metric-room"><span>방</span><strong>${escapeHtml(roomCode)}</strong></div>` : ""}
