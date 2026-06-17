@@ -126,6 +126,83 @@ export function purchaseShopItem(state, itemId) {
   };
 }
 
+// ============================================================
+// 합성소 (Fusion) — 여분 복제본 N개를 소모해 상위 등급 1개를 연성.
+// 컬렉션의 첫 1개는 항상 보존(여분만 사용). Dust 와 무관한 새 사용처.
+// ============================================================
+export const FUSION_COST = 4; // 같은 등급 여분 4개 → 상위 등급 1개
+
+const FUSIBLE_GRADES = GRADE_ORDER.slice(0, -1); // Mythic 제외(최상위)
+
+export function getFusionInfo(state, grade) {
+  const idx = GRADE_ORDER.indexOf(grade);
+  const nextGrade = idx >= 0 && idx < GRADE_ORDER.length - 1 ? GRADE_ORDER[idx + 1] : null;
+  let spareCopies = 0;
+  for (const item of collections) {
+    if (item.grade !== grade) continue;
+    spareCopies += Math.max(0, (state.inventory[item.id] || 0) - 1);
+  }
+  const possibleFusions = nextGrade ? Math.floor(spareCopies / FUSION_COST) : 0;
+  return {
+    grade,
+    nextGrade,
+    spareCopies,
+    cost: FUSION_COST,
+    possibleFusions,
+    canFuse: Boolean(nextGrade) && possibleFusions > 0
+  };
+}
+
+export function getAllFusionInfo(state) {
+  return FUSIBLE_GRADES.map((grade) => getFusionInfo(state, grade));
+}
+
+export function fuseGrade(state, grade) {
+  const info = getFusionInfo(state, grade);
+  if (!info.canFuse) return { ok: false, reason: "NOT_ENOUGH_COPIES", info };
+
+  // 여분이 많은 아이템부터 소모(컬렉션 1개는 항상 보존)
+  let remaining = FUSION_COST;
+  const sources = collections
+    .filter((item) => item.grade === grade && (state.inventory[item.id] || 0) > 1)
+    .sort((a, b) => (state.inventory[b.id] || 0) - (state.inventory[a.id] || 0));
+  for (const item of sources) {
+    if (remaining <= 0) break;
+    const spare = Math.max(0, (state.inventory[item.id] || 0) - 1);
+    const take = Math.min(spare, remaining);
+    state.inventory[item.id] -= take;
+    remaining -= take;
+  }
+  if (remaining > 0) return { ok: false, reason: "NOT_ENOUGH_COPIES", info };
+
+  // 상위 등급 랜덤 1개 생성
+  const pool = collections.filter((item) => item.grade === info.nextGrade);
+  const produced = pool[Math.floor(Math.random() * pool.length)];
+  const isNew = !(state.inventory[produced.id] > 0);
+  state.inventory[produced.id] = (state.inventory[produced.id] || 0) + 1;
+  state.collection[produced.id] = true;
+  state.totalFused = (state.totalFused || 0) + 1;
+
+  state.history = [
+    {
+      id: createId(),
+      itemId: produced.id,
+      name: produced.name,
+      grade: produced.grade,
+      type: produced.type,
+      capsule: "합성소",
+      isNew,
+      isDuplicate: !isNew,
+      fused: true,
+      dustGained: 0,
+      createdAt: new Date().toISOString()
+    },
+    ...state.history
+  ].slice(0, 100);
+
+  return { ok: true, consumedGrade: grade, nextGrade: info.nextGrade, item: produced, isNew };
+}
+
 export function getAdvancedStats(state) {
   const gradeOwnedCounts = Object.fromEntries(GRADE_ORDER.map((grade) => [grade, 0]));
   const typeOwnedCounts = Object.fromEntries(TYPE_ORDER.map((type) => [type, 0]));

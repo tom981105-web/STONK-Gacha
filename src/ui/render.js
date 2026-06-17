@@ -8,8 +8,12 @@ import {
   getAdvancedStats,
   getBulkDismantlePreview,
   getDismantleInfo,
-  purchaseShopItem
+  purchaseShopItem,
+  getAllFusionInfo,
+  fuseGrade,
+  FUSION_COST
 } from "../core/economy.js";
+import { getAchievements, getAchievementSummary, claimAchievement } from "../core/achievements.js";
 import { showModal, closeModal } from "./modal.js";
 import { showToast } from "./toast.js";
 import * as remote from "../core/remote.js";
@@ -122,6 +126,8 @@ function mergeRemoteIntoState(p) {
   state.totalDustEarned = Number(gs.totalDustEarned) || 0;
   state.freeClaimedDate = gs.freeClaimedDate || null;
   state.pity = Math.max(0, Number(gs.pity) || 0);
+  state.totalFused = Number(gs.totalFused) || 0;
+  state.achievementsClaimed = Array.isArray(gs.achievementsClaimed) ? gs.achievementsClaimed : [];
   state.collection = {};
   state = normalizeState(state); // 인벤토리→컬렉션 재구성 + 일일 카운터 리셋
 }
@@ -135,6 +141,8 @@ function buildGachaStats() {
     totalDustEarned: state.totalDustEarned || 0,
     freeClaimedDate: state.freeClaimedDate || null,
     pity: Math.max(0, Number(state.pity) || 0),
+    totalFused: Number(state.totalFused) || 0,
+    achievementsClaimed: Array.isArray(state.achievementsClaimed) ? state.achievementsClaimed : [],
     updatedAt: Date.now()
   };
 }
@@ -189,9 +197,14 @@ function renderApp() {
 
         <aside class="side-zone" aria-label="Activity and statistics">
           ${renderStatsPanel(collectionStats, advancedStats)}
+          ${renderAchievements()}
           ${renderHistory()}
           ${renderRoomFeed()}
         </aside>
+
+        <section class="fusion-zone" aria-label="Fusion lab">
+          ${renderFusion()}
+        </section>
 
         <section class="shop-zone" aria-label="Dust exchange">
           ${renderShop()}
@@ -448,6 +461,83 @@ function renderRoomFeed() {
   `;
 }
 
+function renderFusion() {
+  const rows = getAllFusionInfo(state);
+  return `
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Alchemy desk</p>
+        <h2>합성소</h2>
+      </div>
+      <div class="archive-summary">
+        <strong>${FUSION_COST} : 1</strong>
+        <span>여분 → 상위 등급</span>
+      </div>
+    </div>
+    <div class="fusion-grid">
+      ${rows.map(renderFusionRow).join("")}
+    </div>
+    <p class="fusion-note">같은 등급 <b>여분 ${FUSION_COST}개</b>를 소모해 한 단계 위 등급 1개를 무작위로 연성합니다. 각 컬렉션의 1개는 항상 보존됩니다.</p>
+  `;
+}
+
+function renderFusionRow(info) {
+  const gl = info.grade.toLowerCase();
+  const nl = (info.nextGrade || "").toLowerCase();
+  return `
+    <div class="fusion-row grade-${gl}">
+      <div class="fusion-from grade-${gl}">
+        <span class="grade-pill">${info.grade}</span>
+        <em>여분 ${info.spareCopies}</em>
+      </div>
+      <div class="fusion-arrow">→</div>
+      <div class="fusion-to grade-${nl}">
+        <span class="grade-pill">${info.nextGrade || "-"}</span>
+      </div>
+      <button class="primary-button fusion-btn" type="button" data-fuse="${info.grade}" ${info.canFuse ? "" : "disabled"}>
+        ${info.canFuse ? `합성 (${info.possibleFusions})` : `여분 ${info.cost}개 필요`}
+      </button>
+    </div>`;
+}
+
+function renderAchievements() {
+  const list = getAchievements(state);
+  const summary = getAchievementSummary(state);
+  return `
+    <section class="achievements-block">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="eyebrow">Milestones</p>
+          <h2>도전과제</h2>
+        </div>
+        <div class="ach-progress">${summary.done}<span>/${summary.total}</span></div>
+      </div>
+      <div class="ach-list">
+        ${list.map(renderAchievementRow).join("")}
+      </div>
+    </section>`;
+}
+
+function renderAchievementRow(a) {
+  const pct = Math.min(100, Math.round((a.progress / a.goal) * 100));
+  return `
+    <div class="ach-row ${a.done ? "is-done" : ""} ${a.claimed ? "is-claimed" : ""} ${a.claimable ? "is-claimable" : ""}">
+      <div class="ach-icon">${a.icon}</div>
+      <div class="ach-body">
+        <div class="ach-top"><strong>${a.name}</strong><span>${formatNumber(a.value)}/${formatNumber(a.goal)}</span></div>
+        <div class="ach-desc">${a.desc}</div>
+        <div class="ach-bar"><span style="width:${pct}%"></span></div>
+      </div>
+      <div class="ach-action">
+        ${a.claimable
+          ? `<button class="primary-button ach-claim" type="button" data-claim-achievement="${a.id}">+${formatNumber(a.reward)}</button>`
+          : a.claimed
+            ? `<span class="ach-claimed">✓ 수령</span>`
+            : `<span class="ach-reward">${formatNumber(a.reward)}<em>Dust</em></span>`}
+      </div>
+    </div>`;
+}
+
 function renderShop() {
   return `
     <div class="section-heading">
@@ -641,6 +731,14 @@ function bindEvents() {
 
   appRoot.querySelectorAll("[data-shop-buy]").forEach((button) => {
     button.addEventListener("click", () => handleShopPurchase(button.dataset.shopBuy));
+  });
+
+  appRoot.querySelectorAll("[data-fuse]").forEach((button) => {
+    button.addEventListener("click", () => handleFuse(button.dataset.fuse));
+  });
+
+  appRoot.querySelectorAll("[data-claim-achievement]").forEach((button) => {
+    button.addEventListener("click", () => handleClaimAchievement(button.dataset.claimAchievement));
   });
 
   appRoot.querySelector("[data-dev-trigger]")?.addEventListener("click", () => {
@@ -994,6 +1092,34 @@ function showBulkDismantleConfirm() {
       { id: "cancel", label: "취소", className: "ghost-button modal-confirm", onClick: closeModal }
     ]
   });
+}
+
+async function handleFuse(grade) {
+  if (isDrawing) return;
+  state = normalizeState(state);
+  const result = fuseGrade(state, grade);
+  if (!result.ok) {
+    showToast("합성할 여분 복제본이 부족합니다.", "info");
+    return;
+  }
+  await commit();
+  renderApp();
+  const fn = sfx[String(result.item.grade).toLowerCase()];
+  if (fn) fn(); else if (sfx.dust) sfx.dust();
+  triggerRarityFx(result.item.grade);
+  showToast(`합성 성공! ${result.item.grade} · ${result.item.name}${result.isNew ? " (NEW)" : ""}`, "success");
+}
+
+async function handleClaimAchievement(id) {
+  const result = claimAchievement(state, id);
+  if (!result.ok) {
+    if (result.reason === "NOT_DONE") showToast("아직 조건을 달성하지 않았습니다.", "info");
+    return;
+  }
+  await commit();
+  renderApp();
+  if (sfx.coin) sfx.coin();
+  showToast(`도전과제 완료! ${result.name} · +${formatNumber(result.reward)} Dust`, "success");
 }
 
 function handleShopPurchase(itemId) {

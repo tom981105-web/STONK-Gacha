@@ -20,6 +20,8 @@ export function createDefaultState() {
     shopPurchases: [],
     totalDismantled: 0,
     totalDustEarned: 0,
+    totalFused: 0,
+    achievementsClaimed: [],
     selectedFrame: null,
     selectedTheme: null,
     selectedSkin: null,
@@ -56,6 +58,8 @@ export function normalizeState(rawState) {
   state.shopPurchases = Array.isArray(state.shopPurchases) ? state.shopPurchases : [];
   state.totalDismantled = toNumber(state.totalDismantled, 0);
   state.totalDustEarned = toNumber(state.totalDustEarned, 0);
+  state.totalFused = toNumber(state.totalFused, 0);
+  state.achievementsClaimed = Array.isArray(state.achievementsClaimed) ? state.achievementsClaimed : [];
   state.totalDraws = toNumber(state.totalDraws, state.history.length);
   state.selectedFrame = normalizeSelected(state.selectedFrame);
   state.selectedTheme = normalizeSelected(state.selectedTheme);
