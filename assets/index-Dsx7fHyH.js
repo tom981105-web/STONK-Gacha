@@ -71,9 +71,9 @@ FIREBASE: `))}restoreState_(){this.tryAuth(),this.tryAppCheck();for(let e of thi
           <button class="primary-button strong" type="submit">Gacha Shop 입장</button>
         </form>
         <nav class="gate-nav">
-          <a href="${t_.home}">STONK Home</a>
-          <a href="${t_.battle}">Battle</a>
-          <a href="${t_.arcade}">Arcade</a>
+          <a href="${t_.home}">홈</a>
+          <a href="${t_.battle}">주식시장</a>
+          <a href="${t_.arcade}">아케이드</a>
         </nav>
         ${c_===`error`?`<p class="gate-error">연결 오류가 발생했습니다. 잠시 후 다시 시도하세요.</p>`:``}
       </section>
@@ -81,11 +81,11 @@ FIREBASE: `))}restoreState_(){this.tryAuth(),this.tryAppCheck();for(let e of thi
   `,q.querySelector(`#roomForm`)?.addEventListener(`submit`,e=>{e.preventDefault();let t=kg(q.querySelector(`#roomInput`)?.value);if(!t){f(`방 코드를 입력하세요.`,`danger`);return}G.click(),f_(t)})}function v_(e){return X?`${e}?room=${encodeURIComponent(X)}`:e}function y_(){let e={online:[`connected`,`연결됨`],connecting:[`pending`,`입장 중...`],error:[`error`,`연결 오류`],offline:[`pending`,yg?`오프라인`:`로컬 모드`]},[t,n]=e[c_]||e.offline;return`<span class="conn-chip conn-${t}">${n}</span>`}function b_(e){let t=Wg();return`
     <header class="status-bar">
       <nav class="nav-buttons" aria-label="STONK network">
-        <a class="nav-link" href="${v_(t_.home)}">Home</a>
-        <a class="nav-link" href="${v_(t_.battle)}">Battle</a>
-        <a class="nav-link" href="${v_(t_.board)}">Board</a>
-        <a class="nav-link" href="${v_(t_.wiki)}">Wiki</a>
-        <a class="nav-link" href="${v_(t_.arcade)}">Arcade</a>
+        <a class="nav-link" href="${v_(t_.home)}">홈</a>
+        <a class="nav-link" href="${v_(t_.battle)}">주식시장</a>
+        <a class="nav-link" href="${v_(t_.board)}">주식소식</a>
+        <a class="nav-link" href="${v_(t_.wiki)}">주식정보</a>
+        <a class="nav-link" href="${v_(t_.arcade)}">아케이드</a>
       </nav>
       <div class="status-cluster">
         ${X?`<div class="status-metric metric-room"><span>방</span><strong>${tv(X)}</strong></div>`:``}
