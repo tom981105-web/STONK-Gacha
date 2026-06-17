@@ -78,6 +78,8 @@ p { margin: 0; }
 .primary-button.strong { background: var(--grad-gold); color: #1a140a; box-shadow: 0 14px 30px rgba(232, 200, 122, 0.26); }
 .capsule-gold .primary-button { background: var(--grad-gold); color: #1a140a; }
 .capsule-green .primary-button { background: linear-gradient(135deg, #6fe0ad, #2b9e72); color: #04221a; }
+.capsule-azure .primary-button { background: linear-gradient(135deg, #7db4ff, #3f6fd0); color: #041026; }
+.capsule-azure .primary-button.strong { background: var(--grad-gold); color: #1a140a; }
 .primary-button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.06); }
 .primary-button:active:not(:disabled) { transform: translateY(0) scale(0.985); }
 .ghost-button {
@@ -202,7 +204,7 @@ select option { background: #15101f; }
   background: linear-gradient(180deg, #fbf4e3, #e3c987 70%, #b8923f); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 /* ---------- 캡슐 머신 ---------- */
-.capsule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.capsule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
 .capsule-card {
   position: relative; overflow: hidden; display: grid; gap: 16px; padding: 22px; border-radius: var(--radius);
   border: 1px solid var(--gold-line-soft); background: rgba(0, 0, 0, 0.3); box-shadow: var(--emboss);
@@ -210,6 +212,8 @@ select option { background: #15101f; }
 }
 .capsule-green { background: linear-gradient(180deg, rgba(87, 212, 155, 0.08), rgba(0, 0, 0, 0.35)); }
 .capsule-gold { background: linear-gradient(180deg, rgba(232, 200, 122, 0.1), rgba(0, 0, 0, 0.35)); }
+.capsule-azure { background: linear-gradient(180deg, rgba(110, 168, 255, 0.1), rgba(0, 0, 0, 0.35)); }
+.capsule-azure:hover { border-color: rgba(110, 168, 255, 0.45); }
 .capsule-card:hover { transform: translateY(-4px); box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5); }
 .capsule-green:hover { border-color: rgba(87, 212, 155, 0.4); }
 .capsule-gold:hover { border-color: var(--gold-line); }
@@ -225,6 +229,7 @@ select option { background: #15101f; }
 .capsule-ball { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-weight: 800; font-size: 24px; color: #fff; box-shadow: inset 0 -6px 14px rgba(0, 0, 0, 0.35), 0 8px 20px rgba(0, 0, 0, 0.45); transition: transform 0.3s var(--ease); }
 .ball-green { background: radial-gradient(circle at 36% 30%, #b6ffe6, var(--good) 60%, #16906a); color: #04221a; }
 .ball-gold { background: radial-gradient(circle at 36% 30%, #fff0c4, var(--gold) 60%, var(--gold-deep)); color: #2a1e00; }
+.ball-azure { background: radial-gradient(circle at 36% 30%, #cfe2ff, #6ea8ff 60%, #2f5fb0); color: #04122e; }
 .machine-body { width: 90px; height: 34px; margin-top: -6px; border-radius: 0 0 14px 14px; display: grid; place-items: center; background: linear-gradient(180deg, #1a1620, #0c0c0f); border: 1px solid var(--gold-line-soft); }
 .machine-slot { width: 40px; height: 9px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.08); }
 .capsule-card.is-cranking .machine-dome { animation: capsuleShake 0.6s cubic-bezier(0.2, 0.9, 0.28, 1) infinite; }

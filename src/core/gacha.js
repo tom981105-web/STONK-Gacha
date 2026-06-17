@@ -1,35 +1,29 @@
 import { collections, GRADE_ORDER } from "../data/collections.js";
 
-export const CAPSULES = {
-  normal: {
-    id: "normal",
-    name: "일반 캡슐",
-    tone: "green",
-    singleCost: 1000000,
-    tenCost: 10000000,
+// 캡슐 = 시리즈. 각 시리즈는 자기 시리즈의 아이템만 뽑는다.
+// 시리즈를 추가하면 캡슐도 함께 늘어난다.
+export const SERIES = [
+  {
+    id: "stock-bg",
+    series: "stock-bg",
+    name: "주식시장 배경화면",
+    subtitle: "STONK 세계관 배경화면 컬렉션",
+    tone: "azure",
+    emoji: "🖼️",
+    singleCost: 2000000,
+    tenCost: 20000000,
     rates: {
-      Common: 60,
-      Rare: 27,
-      Epic: 10,
-      Legendary: 2.7,
-      Mythic: 0.3
-    }
-  },
-  premium: {
-    id: "premium",
-    name: "프리미엄 캡슐",
-    tone: "gold",
-    singleCost: 5000000,
-    tenCost: 50000000,
-    rates: {
-      Common: 35,
-      Rare: 35,
-      Epic: 20,
-      Legendary: 8,
-      Mythic: 2
+      Common: 50,
+      Rare: 30,
+      Epic: 15,
+      Legendary: 4,
+      Mythic: 1
     }
   }
-};
+];
+
+export const CAPSULES = Object.fromEntries(SERIES.map((s) => [s.id, s]));
+export const DEFAULT_SERIES = SERIES[0].id;
 
 const RARE_OR_ABOVE = new Set(["Rare", "Epic", "Legendary", "Mythic"]);
 const LEGENDARY_OR_ABOVE = new Set(["Legendary", "Mythic"]);
@@ -57,10 +51,10 @@ export function rollItems(capsuleId, count) {
   const drawCount = count === 10 ? 10 : 1;
   const items = [];
   for (let index = 0; index < drawCount; index += 1) {
-    items.push(pickItemByGrade(rollGrade(capsule.rates)));
+    items.push(pickItemByGrade(rollGrade(capsule.rates), capsule.series));
   }
   if (drawCount === 10 && !items.some((item) => RARE_OR_ABOVE.has(item.grade))) {
-    items[items.length - 1] = pickItemByGrade(rollGrade(capsule.rates, "Rare"));
+    items[items.length - 1] = pickItemByGrade(rollGrade(capsule.rates, "Rare"), capsule.series);
   }
   return { capsule, drawCount, items };
 }
@@ -76,14 +70,14 @@ export function rollItemsWithPity(capsuleId, count, pityStart) {
   for (let index = 0; index < drawCount; index += 1) {
     pity += 1;
     const item = pity >= PITY_MAX
-      ? pickItemByGrade(rollGrade(capsule.rates, "Legendary")) // 천장 도달 → Legendary 이상 보장
-      : pickItemByGrade(rollGrade(capsule.rates));
+      ? pickItemByGrade(rollGrade(capsule.rates, "Legendary"), capsule.series) // 천장 도달 → Legendary 이상 보장
+      : pickItemByGrade(rollGrade(capsule.rates), capsule.series);
     if (LEGENDARY_OR_ABOVE.has(item.grade)) pity = 0; // 보상 획득 시 천장 리셋
     items.push(item);
   }
   // 10연차 Rare 이상 1개 보장(기존 규칙 유지)
   if (drawCount === 10 && !items.some((it) => RARE_OR_ABOVE.has(it.grade))) {
-    items[items.length - 1] = pickItemByGrade(rollGrade(capsule.rates, "Rare"));
+    items[items.length - 1] = pickItemByGrade(rollGrade(capsule.rates, "Rare"), capsule.series);
   }
   return { capsule, drawCount, items, pity };
 }
@@ -178,8 +172,11 @@ function rollGrade(rates, minimumGrade = "Common") {
   return availableGrades[availableGrades.length - 1];
 }
 
-function pickItemByGrade(grade) {
-  const pool = collections.filter((item) => item.grade === grade);
+function pickItemByGrade(grade, seriesId) {
+  let pool = collections.filter((item) => item.grade === grade && (!seriesId || item.series === seriesId));
+  // 해당 시리즈에 그 등급이 없으면 시리즈 전체에서 보정
+  if (!pool.length && seriesId) pool = collections.filter((item) => item.series === seriesId);
+  if (!pool.length) pool = collections.filter((item) => item.grade === grade);
   return pool[Math.floor(Math.random() * pool.length)];
 }
 

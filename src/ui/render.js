@@ -1,6 +1,6 @@
 import { collections, GRADE_ORDER, TYPE_ORDER } from "../data/collections.js";
 import { shopItems } from "../data/shop.js";
-import { CAPSULES, rollItems, rollItemsWithPity, recordDraw, drawCapsule, getCollectionStats, getRateRows, getDrawCost, PITY_MAX } from "../core/gacha.js";
+import { CAPSULES, SERIES, DEFAULT_SERIES, rollItems, rollItemsWithPity, recordDraw, drawCapsule, getCollectionStats, getRateRows, getDrawCost, PITY_MAX } from "../core/gacha.js";
 import { loadState, normalizeState, resetState, saveState, getTodayKey } from "../core/storage.js";
 import {
   bulkDismantle,
@@ -45,7 +45,7 @@ let state;
 let isDrawing = false;
 let activeCapsuleId = null;
 let devClickCount = 0;
-let lastDrawRequest = { capsuleId: "normal", count: 1 };
+let lastDrawRequest = { capsuleId: DEFAULT_SERIES, count: 1 };
 
 // PHASE 2 원격 상태
 let roomCode = "";
@@ -187,11 +187,10 @@ function renderApp() {
           <div class="brand-block">
             <p class="eyebrow">STONK 캡슐 교환소</p>
             <h1>STONK Gacha Shop</h1>
-            <p class="brand-copy">네온 간판 아래 캡슐 머신에서 스킨 · 프레임 · 이펙트 · 테마를 수집하세요.</p>
+            <p class="brand-copy">시리즈별 캡슐을 돌려 STONK 세계관의 배경화면을 수집하세요. 첫 시리즈는 <b>주식시장 배경화면</b>입니다.</p>
           </div>
           <div class="capsule-grid">
-            ${renderCapsule(CAPSULES.normal)}
-            ${renderCapsule(CAPSULES.premium)}
+            ${SERIES.map((s) => renderCapsule(s)).join("")}
           </div>
         </section>
 
@@ -335,12 +334,12 @@ function renderCapsule(capsule) {
     <article class="capsule-card capsule-${capsule.tone} ${isActive ? "capsule-active" : ""} ${drawingThis ? "is-cranking" : ""}">
       <div class="capsule-visual" aria-hidden="true">
         <div class="capsule-machine">
-          <div class="machine-dome"><div class="capsule-ball ball-${capsule.tone}"><span>${capsule.id === "normal" ? "N" : "P"}</span></div></div>
+          <div class="machine-dome"><div class="capsule-ball ball-${capsule.tone}"><span>${capsule.emoji || "🎁"}</span></div></div>
           <div class="machine-body"><div class="machine-slot"></div></div>
         </div>
       </div>
       <div class="capsule-content">
-        <p class="capsule-label">${capsule.id === "normal" ? "일반 마켓 풀" : "고변동 프리미엄 풀"}</p>
+        <p class="capsule-label">${capsule.subtitle || "STONK 시리즈 캡슐"}</p>
         <h2>${capsule.name}</h2>
         <div class="price-lines">
           <span>1회 · ${formatNumber(capsule.singleCost)}</span>
@@ -676,7 +675,7 @@ function bindEvents() {
   });
 
   appRoot.querySelector("[data-free-pull]")?.addEventListener("click", () => {
-    handleDraw("normal", 1, { free: true });
+    handleDraw(DEFAULT_SERIES, 1, { free: true });
   });
 
   appRoot.querySelector("[data-sound-toggle]")?.addEventListener("click", () => {
