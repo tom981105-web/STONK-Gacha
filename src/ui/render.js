@@ -185,7 +185,7 @@ function renderApp() {
       <main class="main-layout">
         <section class="machine-zone" aria-label="Gacha capsules">
           <div class="brand-block">
-            <p class="eyebrow">STONK Capsule Exchange</p>
+            <p class="eyebrow">STONK 캡슐 교환소</p>
             <h1>STONK Gacha Shop</h1>
             <p class="brand-copy">네온 간판 아래 캡슐 머신에서 스킨 · 프레임 · 이펙트 · 테마를 수집하세요.</p>
           </div>
@@ -280,12 +280,12 @@ function renderStatusBar(stats) {
         <a class="nav-link" href="${withRoom(ROUTES.arcade)}">Arcade</a>
       </nav>
       <div class="status-cluster">
-        ${roomCode ? `<div class="status-metric metric-room"><span>Room</span><strong>${escapeHtml(roomCode)}</strong></div>` : ""}
+        ${roomCode ? `<div class="status-metric metric-room"><span>방</span><strong>${escapeHtml(roomCode)}</strong></div>` : ""}
         ${connectionChip()}
-        ${renderMetric("Cash", `${formatNumber(state.money)}`, "money")}
-        ${renderMetric("Dust", formatNumber(state.dust), "dust")}
-        ${renderMetric("Collection", `${stats.ownedCount}/${stats.totalCount}`, "collection")}
-        ${renderMetric("Today", `${state.drawCountToday}`, "draws")}
+        ${renderMetric("보유금", `${formatNumber(state.money)}`, "money")}
+        ${renderMetric("더스트", formatNumber(state.dust), "dust")}
+        ${renderMetric("도감", `${stats.ownedCount}/${stats.totalCount}`, "collection")}
+        ${renderMetric("오늘", `${state.drawCountToday}`, "draws")}
         <button class="sound-toggle ${muted ? "is-muted" : ""}" type="button" data-sound-toggle aria-label="소리 켜기/끄기" title="소리 ${muted ? "꺼짐" : "켜짐"}">${muted ? "🔇" : "🔊"}</button>
       </div>
     </header>
@@ -311,7 +311,7 @@ function renderBanner() {
     <section class="pickup-banner" aria-label="Season banner">
       <div class="pickup-glow" aria-hidden="true"></div>
       <div class="pickup-copy">
-        <span class="pickup-tag">SEASON 1 · NEON MARKET</span>
+        <span class="pickup-tag">시즌 1 · 네온 마켓</span>
         <h2>오늘의 픽업 — Mythic 확률 UP 연출 캡슐</h2>
         <p>10연차는 Rare 이상 1개 확정. Legendary·Mythic 등장 시 특별 연출이 재생됩니다.</p>
         <div class="pity-meter ${close ? "pity-close" : ""}" title="천장: ${PITY_MAX}회 안에 Legendary 이상 보장">
@@ -340,16 +340,16 @@ function renderCapsule(capsule) {
         </div>
       </div>
       <div class="capsule-content">
-        <p class="capsule-label">${capsule.id === "normal" ? "Standard market pool" : "High-volatility premium pool"}</p>
+        <p class="capsule-label">${capsule.id === "normal" ? "일반 마켓 풀" : "고변동 프리미엄 풀"}</p>
         <h2>${capsule.name}</h2>
         <div class="price-lines">
-          <span>1 pull · ${formatNumber(capsule.singleCost)}</span>
-          <span>10 pulls · ${formatNumber(capsule.tenCost)}</span>
+          <span>1회 · ${formatNumber(capsule.singleCost)}</span>
+          <span>10회 · ${formatNumber(capsule.tenCost)}</span>
         </div>
         <div class="capsule-actions">
-          <button class="primary-button" type="button" data-draw="${capsule.id}" data-count="1" ${isDrawing ? "disabled" : ""}>1 Pull</button>
-          <button class="primary-button strong" type="button" data-draw="${capsule.id}" data-count="10" ${isDrawing ? "disabled" : ""}>10 Pulls</button>
-          <button class="ghost-button" type="button" data-rates="${capsule.id}" ${isDrawing ? "disabled" : ""}>Rates</button>
+          <button class="primary-button" type="button" data-draw="${capsule.id}" data-count="1" ${isDrawing ? "disabled" : ""}>1회 뽑기</button>
+          <button class="primary-button strong" type="button" data-draw="${capsule.id}" data-count="10" ${isDrawing ? "disabled" : ""}>10회 뽑기</button>
+          <button class="ghost-button" type="button" data-rates="${capsule.id}" ${isDrawing ? "disabled" : ""}>확률</button>
         </div>
       </div>
     </article>
@@ -361,29 +361,29 @@ function renderStatsPanel(collectionStats, advancedStats) {
     (grade) => `<span class="grade-chip grade-${grade.toLowerCase()}">${grade} ${advancedStats.gradeOwnedCounts[grade]}</span>`
   ).join("");
   const typeRows = TYPE_ORDER.map(
-    (type) => `<span class="type-chip">${type} ${advancedStats.typeOwnedCounts[type]}</span>`
+    (type) => `<span class="type-chip">${typeKo(type)} ${advancedStats.typeOwnedCounts[type]}</span>`
   ).join("");
 
   return `
     <section class="stats-panel">
       <div class="section-heading compact-heading">
         <div>
-          <p class="eyebrow">Vault statistics</p>
-          <h2>Collection Stats</h2>
+          <p class="eyebrow">보관함 통계</p>
+          <h2>도감 통계</h2>
         </div>
       </div>
       <div class="stats-grid">
-        ${renderMiniStat("Completion", `${collectionStats.completionRate}%`)}
-        ${renderMiniStat("Total Pulls", formatNumber(state.totalDraws || 0))}
-        ${renderMiniStat("Today Pulls", formatNumber(state.drawCountToday))}
-        ${renderMiniStat("Recent Best", advancedStats.recentHighestGrade)}
-        ${renderMiniStat("Duplicates", formatNumber(advancedStats.duplicateQuantity))}
-        ${renderMiniStat("Dust Ready", formatNumber(advancedStats.dismantleableDust))}
+        ${renderMiniStat("완성도", `${collectionStats.completionRate}%`)}
+        ${renderMiniStat("누적 뽑기", formatNumber(state.totalDraws || 0))}
+        ${renderMiniStat("오늘 뽑기", formatNumber(state.drawCountToday))}
+        ${renderMiniStat("최근 최고", advancedStats.recentHighestGrade)}
+        ${renderMiniStat("중복", formatNumber(advancedStats.duplicateQuantity))}
+        ${renderMiniStat("더스트 가능", formatNumber(advancedStats.dismantleableDust))}
       </div>
       <div class="stat-chip-row">${gradeRows}</div>
       <div class="stat-chip-row">${typeRows}</div>
       <button class="ghost-button full-button" type="button" data-bulk-dismantle ${advancedStats.duplicateQuantity ? "" : "disabled"}>
-        중복 일괄 분해 · +${formatNumber(advancedStats.dismantleableDust)} Dust
+        중복 일괄 분해 · +${formatNumber(advancedStats.dismantleableDust)} 더스트
       </button>
     </section>
   `;
@@ -406,7 +406,7 @@ function renderHistory() {
       <div class="section-heading compact-heading">
         <div>
           <p class="eyebrow">내 최근 획득</p>
-          <h2>My Recent Pulls</h2>
+          <h2>최근 획득</h2>
         </div>
       </div>
       <div class="history-list">
@@ -420,7 +420,7 @@ function renderHistory() {
                         <strong>${entry.name}</strong>
                         <span>${entry.capsule} / ${entry.type}</span>
                       </div>
-                      <em>${entry.isNew ? "NEW" : "DUP"}</em>
+                      <em>${entry.isNew ? "신규" : "중복"}</em>
                     </button>
                   `
                 )
@@ -440,7 +440,7 @@ function renderRoomFeed() {
       <div class="section-heading compact-heading">
         <div>
           <p class="eyebrow">같은 방 획득 피드</p>
-          <h2>Room Feed</h2>
+          <h2>방 피드</h2>
         </div>
       </div>
       <div class="history-list">
@@ -542,12 +542,12 @@ function renderShop() {
   return `
     <div class="section-heading">
       <div>
-        <p class="eyebrow">Dust exchange desk</p>
-        <h2>Dust 교환소</h2>
+        <p class="eyebrow">더스트 교환 데스크</p>
+        <h2>더스트 교환소</h2>
       </div>
       <div class="archive-summary">
         <strong>${formatNumber(state.dust)}</strong>
-        <span>Dust 보유</span>
+        <span>더스트 보유</span>
       </div>
     </div>
     <div class="shop-grid">
@@ -563,15 +563,15 @@ function renderShopItem(item) {
   return `
     <article class="shop-card ${canBuy ? "" : "is-locked-shop"}">
       <div class="shop-topline">
-        <span>${item.type}</span>
+        <span>${typeKo(item.type)}</span>
         <strong>보유 ${formatNumber(owned)}</strong>
       </div>
       <h3>${item.name}</h3>
       <p>${item.description}</p>
       <div class="shop-footer">
-        <span>${formatNumber(item.price)} Dust</span>
+        <span>${formatNumber(item.price)} 더스트</span>
         <button class="primary-button shop-buy" type="button" data-shop-buy="${item.id}" ${canBuy ? "" : "disabled"}>
-          ${canBuy ? "교환" : "Dust 부족"}
+          ${canBuy ? "교환" : "더스트 부족"}
         </button>
       </div>
     </article>
@@ -582,37 +582,37 @@ function renderCollectionHeader(stats, advancedStats) {
   return `
     <div class="section-heading collection-heading">
       <div>
-        <p class="eyebrow">Collection archive</p>
-        <h2>Collection Vault</h2>
+        <p class="eyebrow">컬렉션 아카이브</p>
+        <h2>컬렉션 도감</h2>
       </div>
       <div class="archive-summary">
         <strong>${stats.ownedCount}</strong>
-        <span>/ ${stats.totalCount} owned</span>
+        <span>/ ${stats.totalCount} 보유</span>
       </div>
     </div>
     <div class="filter-bar">
       <label>
-        <span>Grade</span>
+        <span>등급</span>
         <select data-filter-grade>
-          ${["All", ...GRADE_ORDER].map((grade) => `<option value="${grade}" ${filters.grade === grade ? "selected" : ""}>${grade}</option>`).join("")}
+          ${["All", ...GRADE_ORDER].map((grade) => `<option value="${grade}" ${filters.grade === grade ? "selected" : ""}>${grade === "All" ? "전체" : grade}</option>`).join("")}
         </select>
       </label>
       <label>
-        <span>Type</span>
+        <span>종류</span>
         <select data-filter-type>
-          ${["All", ...TYPE_ORDER].map((type) => `<option value="${type}" ${filters.type === type ? "selected" : ""}>${type}</option>`).join("")}
+          ${["All", ...TYPE_ORDER].map((type) => `<option value="${type}" ${filters.type === type ? "selected" : ""}>${typeKo(type)}</option>`).join("")}
         </select>
       </label>
       <label class="search-filter">
-        <span>Search</span>
-        <input type="search" data-filter-query value="${filters.query}" placeholder="Name or effect" />
+        <span>검색</span>
+        <input type="search" data-filter-query value="${filters.query}" placeholder="이름 또는 효과" />
       </label>
       <label class="toggle-filter">
         <input type="checkbox" data-filter-owned ${filters.ownedOnly ? "checked" : ""} />
-        <span>Owned only</span>
+        <span>보유만</span>
       </label>
-      <button class="ghost-button" type="button" data-reset-filters>Clear</button>
-      <div class="filter-note">${formatNumber(advancedStats.dismantleableDust)} Dust ready from duplicates</div>
+      <button class="ghost-button" type="button" data-reset-filters>초기화</button>
+      <div class="filter-note">중복으로 ${formatNumber(advancedStats.dismantleableDust)} 더스트 확보 가능</div>
     </div>
   `;
 }
@@ -636,7 +636,7 @@ function renderCollectionGrid() {
   });
 
   if (!visibleItems.length) {
-    return `<div class="empty-collection">No collections match the current filters.</div>`;
+    return `<div class="empty-collection">현재 필터에 맞는 컬렉션이 없습니다.</div>`;
   }
 
   return `
@@ -655,14 +655,14 @@ function renderCollectionCard(item) {
     <article class="collection-card ${owned ? "is-owned" : "is-locked"} grade-${item.grade.toLowerCase()}" data-collection-id="${item.id}" tabindex="0" role="button" aria-label="${item.name}">
       <div class="card-topline">
         <span class="grade-pill">${item.grade}</span>
-        <span class="type-pill">${item.type}</span>
+        <span class="type-pill">${typeKo(item.type)}</span>
       </div>
       <div class="item-icon" aria-hidden="true">${owned ? item.icon : "🔒"}</div>
-      <h3>${owned ? item.name : "Locked Collection"}</h3>
-      <p>${owned ? item.description : "Open this entry to inspect its hidden market signal."}</p>
+      <h3>${owned ? item.name : "잠긴 컬렉션"}</h3>
+      <p>${owned ? item.description : "획득하면 숨겨진 시장 신호를 확인할 수 있습니다."}</p>
       <div class="card-footer">
         <span>${owned ? item.effectText : item.flavorText}</span>
-        <strong>${owned ? `x${count}${duplicateCount ? ` / +${duplicateCount}` : ""}` : "Locked"}</strong>
+        <strong>${owned ? `x${count}${duplicateCount ? ` / +${duplicateCount}` : ""}` : "미보유"}</strong>
       </div>
     </article>
   `;
@@ -921,7 +921,7 @@ function showRatesModal(capsuleId) {
     title: `${capsule.name} 확률`,
     body: `
       <table class="rate-table">
-        <thead><tr><th>Grade</th><th>Rate</th></tr></thead>
+        <thead><tr><th>등급</th><th>확률</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <p class="modal-note">10연차는 Rare 이상 1개를 확정 보장합니다.</p>
@@ -938,7 +938,7 @@ function showResultsModal(result) {
     .map(
       ({ item, isNew, isDuplicate }, index) => `
         <article class="result-card grade-${item.grade.toLowerCase()} ${GRADE_ORDER.indexOf(item.grade) >= 3 ? "special-result" : ""}" style="--delay:${index * 90}ms">
-          <div class="result-badge ${isNew ? "badge-new" : "badge-dup"}">${isNew ? "NEW" : "DUPLICATE"}</div>
+          <div class="result-badge ${isNew ? "badge-new" : "badge-dup"}">${isNew ? "신규" : "중복"}</div>
           <div class="result-flip">
             <div class="flip-back" aria-hidden="true">?</div>
             <div class="flip-front">
@@ -999,8 +999,8 @@ function showCollectionDetail(itemId) {
         <div class="detail-content">
           <div class="card-topline">
             <span class="grade-pill">${item.grade}</span>
-            <span class="type-pill">${item.type}</span>
-            <span class="state-pill">${owned ? "Owned" : "Unowned"}</span>
+            <span class="type-pill">${typeKo(item.type)}</span>
+            <span class="state-pill">${owned ? "보유" : "미보유"}</span>
           </div>
           <p class="${owned ? "" : "locked-copy"}">${owned ? item.description : "미보유 컬렉션. 획득 전까지 상세 데이터가 일부 가려집니다."}</p>
           <blockquote class="${owned ? "" : "locked-copy"}">${item.flavorText}</blockquote>
@@ -1203,6 +1203,12 @@ function delay(ms) {
 
 function formatNumber(value) {
   return new Intl.NumberFormat("ko-KR").format(value);
+}
+
+// 종류(타입) 라벨 한글 표시 매핑 (내부 값/로직은 영어 유지)
+const TYPE_KO = { Skin: "스킨", Frame: "프레임", Effect: "이펙트", Theme: "테마", ticket: "티켓", coupon: "쿠폰", piece: "조각", box: "박스", All: "전체" };
+function typeKo(value) {
+  return TYPE_KO[value] || value;
 }
 
 function escapeHtml(value) {

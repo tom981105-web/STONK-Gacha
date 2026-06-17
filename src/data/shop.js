@@ -1,67 +1,67 @@
 export const shopItems = [
   {
     id: "normal-capsule-ticket",
-    name: "Normal Capsule Ticket",
+    name: "일반 캡슐 티켓",
     type: "ticket",
     price: 300,
     quantity: 1,
-    description: "A stored ticket for a future Normal Capsule pull."
+    description: "다음 일반 캡슐 뽑기에 사용할 보관용 티켓."
   },
   {
     id: "premium-capsule-ticket",
-    name: "Premium Capsule Ticket",
+    name: "프리미엄 캡슐 티켓",
     type: "ticket",
     price: 1200,
     quantity: 1,
-    description: "A stored ticket for a future Premium Capsule pull."
+    description: "다음 프리미엄 캡슐 뽑기에 사용할 보관용 티켓."
   },
   {
     id: "ten-draw-discount",
-    name: "10 Pull Discount Voucher",
+    name: "10연차 할인권",
     type: "coupon",
     price: 2000,
     quantity: 1,
-    description: "A future discount voucher for a 10-pull capsule order."
+    description: "10연차 캡슐 주문에 쓰는 할인 쿠폰."
   },
   {
     id: "legendary-piece",
-    name: "Legendary Collection Piece",
+    name: "Legendary 조각",
     type: "piece",
     price: 3000,
     quantity: 1,
-    description: "A saved Legendary-grade piece for future synthesis."
+    description: "추후 합성에 쓰는 Legendary 등급 조각."
   },
   {
     id: "mythic-piece",
-    name: "Mythic Collection Piece",
+    name: "Mythic 조각",
     type: "piece",
     price: 10000,
     quantity: 1,
-    description: "A saved Mythic-grade piece for future synthesis."
+    description: "추후 합성에 쓰는 Mythic 등급 조각."
   },
   {
     id: "special-frame-box",
-    name: "Special Frame Box",
+    name: "스페셜 프레임 박스",
     type: "box",
     price: 2500,
     quantity: 1,
-    description: "A sealed frame box. Opening is planned for Phase 3."
+    description: "봉인된 프레임 박스. 개봉은 추후 업데이트 예정."
   },
   {
     id: "theme-box",
-    name: "Theme Box",
+    name: "테마 박스",
     type: "box",
     price: 4000,
     quantity: 1,
-    description: "A sealed theme box. Opening is planned for Phase 3."
+    description: "봉인된 테마 박스. 개봉은 추후 업데이트 예정."
   },
   {
     id: "effect-box",
-    name: "Effect Box",
+    name: "이펙트 박스",
     type: "box",
     price: 4000,
     quantity: 1,
-    description: "A sealed effect box. Opening is planned for Phase 3."
+    description: "봉인된 이펙트 박스. 개봉은 추후 업데이트 예정."
   }
 ];
 

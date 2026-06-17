@@ -3,7 +3,7 @@ import { collections, GRADE_ORDER } from "../data/collections.js";
 export const CAPSULES = {
   normal: {
     id: "normal",
-    name: "Normal Capsule",
+    name: "일반 캡슐",
     tone: "green",
     singleCost: 1000000,
     tenCost: 10000000,
@@ -17,7 +17,7 @@ export const CAPSULES = {
   },
   premium: {
     id: "premium",
-    name: "Premium Capsule",
+    name: "프리미엄 캡슐",
     tone: "gold",
     singleCost: 5000000,
     tenCost: 50000000,
