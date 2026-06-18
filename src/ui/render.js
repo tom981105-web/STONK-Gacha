@@ -959,10 +959,14 @@ function playRevealCinematic(result) {
     <div class="rc-core">
       <div class="rc-ring rc-ring1"></div>
       <div class="rc-ring rc-ring2"></div>
-      <div class="rc-orb"><span class="rc-orb-glyph">${count >= 10 ? "🔮" : "✦"}</span></div>
+      <button class="rc-orb" type="button" aria-label="개봉">
+        <span class="rc-orb-glyph">${count >= 10 ? "🔮" : "✦"}</span>
+        <span class="rc-crack" aria-hidden="true"></span>
+      </button>
       <div class="rc-shock"></div>
     </div>
     <div class="rc-flash"></div>
+    <div class="rc-hint">탭하여 개봉!</div>
     <div class="rc-label">${fx.label ? `<b>${fx.label}</b>` : "<b class='rc-plain'>OPEN!</b>"}<small>${count >= 10 ? "10연차 결과 공개" : "결과 공개"}</small></div>
     <div class="rc-skip">탭하여 건너뛰기 ›</div>
   `;
@@ -970,29 +974,67 @@ function playRevealCinematic(result) {
 
   const timers = [];
   const at = (ms, fn) => timers.push(setTimeout(fn, ms));
-  // 고등급일수록 충전(긴장)을 더 길게 끈다
-  const charge = tier >= 3 ? 1500 : tier >= 2 ? 1050 : 750;
+  let opened = false;
+  let taps = 0;
+  const needTaps = tier >= 4 ? 3 : tier >= 3 ? 2 : 1; // 고등급일수록 더 두드려야 열림(손맛↑)
+  // 충전(긴장): 고등급일수록 길게 끌어 두근거림을 키운다
+  const charge = tier >= 3 ? 1300 : tier >= 2 ? 950 : 700;
 
   sfx.insert?.();
+  // 가속되는 충전음 — '드드드득' 차오르는 손맛
+  (function tick(t, gap) {
+    if (t > charge) return;
+    at(t, () => sfx.click && sfx.click());
+    tick(t + gap, Math.max(45, gap * 0.84));
+  })(120, 150);
+
   at(40, () => ov.classList.add("is-charging"));
+  // 충전 완료 → '탭하여 개봉' 대기 상태 (사용자가 직접 두드려 연다)
   at(charge, () => {
+    if (opened) return;
+    ov.classList.add("is-ready");
+    sfx.crank && sfx.crank();
+  });
+  // 안 두드리면 자동 개봉 (대기 후)
+  at(charge + 2600, () => burst());
+
+  function jolt() {
+    if (opened) return;
+    taps += 1;
+    sfx.pop && sfx.pop();
+    ov.classList.remove("rc-jolt"); void ov.offsetWidth; ov.classList.add("rc-jolt"); // 재시작
+    ov.querySelector(".rc-orb")?.style.setProperty("--crack", String(taps / needTaps));
+    if (taps >= needTaps) burst();
+  }
+
+  function burst() {
+    if (opened) return;
+    opened = true;
+    ov.classList.remove("is-ready");
     ov.classList.add("is-burst");
     spawnBurstParticles(ov, fx.color, tier);
-    const sfn = sfx[grade]; (sfn || sfx.pop)?.();
-  });
-  at(charge + 280, () => ov.classList.add("is-label"));
+    const sfn = sfx[grade]; (sfn || sfx.pop) && (sfn || sfx.pop)();
+    at(280, () => ov.classList.add("is-label"));
+    at(tier >= 3 ? 1750 : 1150, finish);
+  }
 
-  const total = charge + (tier >= 3 ? 1750 : 1150);
   const finish = () => {
-    if (cinematicFinish !== finish) return; // 중복 방지(탭 + 타이머)
+    if (cinematicFinish !== finish) return; // 중복 방지
     cinematicFinish = null;
     timers.forEach(clearTimeout);
     ov.classList.add("is-out");
     setTimeout(() => { ov.remove(); showResultsModal(result); }, 300);
   };
   cinematicFinish = finish;
-  at(total, finish);
-  ov.addEventListener("click", finish);
+
+  // 클릭 동작: 개봉 전이면 '두드려서 열기', 개봉 후(연출 중)면 '건너뛰기'
+  ov.addEventListener("click", () => {
+    if (!opened) {
+      if (ov.classList.contains("is-ready")) jolt();
+    } else {
+      finish();
+    }
+  });
 }
 
 function spawnBurstParticles(ov, color, tier) {
