@@ -61,7 +61,7 @@ function online() {
 export function initApp(root) {
   appRoot = root;
   state = loadState(); // 로컬 캐시로 즉시 1차 페인트
-  roomCode = remote.getUrlRoomCode() || remote.getStoredRoomCode();
+  roomCode = remote.getUrlRoomCode() || remote.getStoredRoomCode() || "MAIN"; // 단일 방 운영: 항상 고정 방
   if (!remote.isConfigured) {
     connection = "offline";
     renderApp();
