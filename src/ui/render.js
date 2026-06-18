@@ -802,8 +802,7 @@ async function handleDraw(capsuleId, count, opts = {}) {
   roomLogs = [{ ...logEntry, createdAt: Date.now() }, ...roomLogs].slice(0, 20);
 
   renderApp();
-  showResultsModal(result);
-  playGradeSfx(result);
+  revealThenShow(result);
 }
 
 // 오프라인 로컬 뽑기(설정 없음/방 미입장 시 호환)
@@ -834,8 +833,7 @@ async function handleDrawLocal(capsuleId, count) {
 
   saveState(state);
   renderApp();
-  showResultsModal(result);
-  playGradeSfx(result);
+  revealThenShow(result);
 }
 
 function bestResult(results) {
@@ -926,6 +924,100 @@ function showRatesModal(capsuleId) {
       <p class="modal-note">10연차는 Rare 이상 1개를 확정 보장합니다.</p>
     `
   });
+}
+
+// 등급별 색/광원/라벨 — 시네마틱 개봉 연출용
+const GRADE_FX = {
+  common:    { color: "#c7ccd6", glow: "rgba(199,204,214,0.55)", label: "" },
+  rare:      { color: "#6ea8ff", glow: "rgba(110,168,255,0.75)", label: "RARE" },
+  epic:      { color: "#a06bff", glow: "rgba(160,107,255,0.82)", label: "EPIC" },
+  legendary: { color: "#e8c87a", glow: "rgba(232,200,122,0.92)", label: "LEGENDARY" },
+  mythic:    { color: "#ff5fa2", glow: "rgba(255,95,162,0.95)", label: "MYTHIC" }
+};
+
+let cinematicFinish = null;
+
+// 뽑기 직후: 전체화면 시네마틱 개봉 → 끝나면 결과 모달. (모션 최소화 설정이면 바로 모달)
+function revealThenShow(result) {
+  if (reduceMotion) { showResultsModal(result); playGradeSfx(result); return; }
+  playRevealCinematic(result);
+}
+
+function playRevealCinematic(result) {
+  const tier = Math.max(...result.results.map(({ item }) => GRADE_ORDER.indexOf(item.grade)));
+  const grade = (GRADE_ORDER[tier] || "Common").toLowerCase();
+  const fx = GRADE_FX[grade] || GRADE_FX.common;
+  const count = result.results.length;
+
+  const ov = document.createElement("div");
+  ov.className = `reveal-cine tier-${grade}`;
+  ov.style.setProperty("--rc", fx.color);
+  ov.style.setProperty("--rg", fx.glow);
+  ov.innerHTML = `
+    <div class="rc-rays"></div>
+    <div class="rc-stars"></div>
+    <div class="rc-core">
+      <div class="rc-ring rc-ring1"></div>
+      <div class="rc-ring rc-ring2"></div>
+      <div class="rc-orb"><span class="rc-orb-glyph">${count >= 10 ? "🔮" : "✦"}</span></div>
+      <div class="rc-shock"></div>
+    </div>
+    <div class="rc-flash"></div>
+    <div class="rc-label">${fx.label ? `<b>${fx.label}</b>` : "<b class='rc-plain'>OPEN!</b>"}<small>${count >= 10 ? "10연차 결과 공개" : "결과 공개"}</small></div>
+    <div class="rc-skip">탭하여 건너뛰기 ›</div>
+  `;
+  document.body.appendChild(ov);
+
+  const timers = [];
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+  // 고등급일수록 충전(긴장)을 더 길게 끈다
+  const charge = tier >= 3 ? 1500 : tier >= 2 ? 1050 : 750;
+
+  sfx.insert?.();
+  at(40, () => ov.classList.add("is-charging"));
+  at(charge, () => {
+    ov.classList.add("is-burst");
+    spawnBurstParticles(ov, fx.color, tier);
+    const sfn = sfx[grade]; (sfn || sfx.pop)?.();
+  });
+  at(charge + 280, () => ov.classList.add("is-label"));
+
+  const total = charge + (tier >= 3 ? 1750 : 1150);
+  const finish = () => {
+    if (cinematicFinish !== finish) return; // 중복 방지(탭 + 타이머)
+    cinematicFinish = null;
+    timers.forEach(clearTimeout);
+    ov.classList.add("is-out");
+    setTimeout(() => { ov.remove(); showResultsModal(result); }, 300);
+  };
+  cinematicFinish = finish;
+  at(total, finish);
+  ov.addEventListener("click", finish);
+}
+
+function spawnBurstParticles(ov, color, tier) {
+  const core = ov.querySelector(".rc-core");
+  if (!core) return;
+  const n = tier >= 4 ? 48 : tier >= 3 ? 38 : tier >= 2 ? 26 : 16;
+  const colors = tier >= 4 ? ["#ff5fa2", "#8d6cff", "#41e0ff", "#fff0c6"]
+    : tier >= 3 ? ["#e8c87a", "#fff0c6", "#ffd98a"]
+    : [color, "#ffffff"];
+  const wrap = document.createElement("div");
+  wrap.className = "rc-particles";
+  for (let i = 0; i < n; i += 1) {
+    const p = document.createElement("span");
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 130 + Math.random() * 340;
+    p.style.setProperty("--tx", `${Math.cos(ang) * dist}px`);
+    p.style.setProperty("--ty", `${Math.sin(ang) * dist}px`);
+    p.style.color = colors[i % colors.length];
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = `${Math.random() * 130}ms`;
+    const sz = 5 + Math.random() * 8;
+    p.style.width = `${sz}px`; p.style.height = `${sz}px`;
+    wrap.appendChild(p);
+  }
+  core.appendChild(wrap);
 }
 
 function showResultsModal(result) {
