@@ -121,6 +121,16 @@ export function saveRoomCode(code) {
 
 const P = (roomCode, uid) => `rooms/${roomCode}/players/${uid}`;
 
+// v2.0: 은행 대출 상태 1회 조회(표시 전용). 가챠 로직에는 영향 없음.
+export async function loadBankLoan(roomCode, uid) {
+  try {
+    const { db } = getFirebase();
+    const snap = await get(ref(db, `rooms/${roomCode}/bank/${uid}`));
+    const b = snap.val() || {};
+    return Math.max(0, Math.trunc(Number(b.loanPrincipal || 0) + Number(b.loanInterest || 0)));
+  } catch (_) { return 0; }
+}
+
 // 플레이어 노드 1회 로드. 없으면 시작 자본으로 생성(Battle 미참여 유저도 가챠 가능).
 export async function loadGachaPlayer(roomCode, uid) {
   const { db } = getFirebase();

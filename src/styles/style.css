@@ -663,3 +663,11 @@ select option { background: #15101f; }
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .result-flip { transform: rotateY(180deg) !important; }
 }
+
+/* v2.0: 대출 경고 (가챠 진행 전) */
+.loan-warning { margin: 4px 0 12px; padding: 10px 13px; border-radius: 12px;
+  background: rgba(242,86,106,.10); border: 1px solid rgba(242,86,106,.4);
+  color: #ffd3d8; font-size: 13px; font-weight: 600; line-height: 1.5; }
+.loan-warning b { color: #ff9aa6; font-weight: 800; }
+.loan-warning a { color: #ffd27a; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.loan-warning a:hover { text-decoration: underline; }

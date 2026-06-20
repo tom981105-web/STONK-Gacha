@@ -103,6 +103,7 @@ async function boot(code) {
     }
     player = await remote.loadGachaPlayer(roomCode, user.uid);
     mergeRemoteIntoState(player);
+    state.bankLoan = await remote.loadBankLoan(roomCode, user.uid); // v2.0: 대출 경고 표시용(1회 조회)
     roomLogs = await remote.loadGachaLogs(roomCode, 20);
     connection = "online";
     saveState(state);
@@ -350,6 +351,7 @@ function renderCapsule(capsule) {
           <span>1회 · ${formatNumber(capsule.singleCost)}</span>
           <span>10회 · ${formatNumber(capsule.tenCost)}</span>
         </div>
+        ${state.bankLoan > 0 ? `<div class="loan-warning">⚠️ 현재 대출 잔액 <b>${formatNumber(state.bankLoan)}</b>이(가) 있습니다. 무리한 가챠는 신용등급에 영향을 줄 수 있습니다. <a href="${withRoom(ROUTES.bank)}">대출 상환하러 가기 →</a></div>` : ""}
         <div class="capsule-actions">
           <button class="primary-button" type="button" data-draw="${capsule.id}" data-count="1" ${isDrawing ? "disabled" : ""}>1회 뽑기</button>
           <button class="primary-button strong" type="button" data-draw="${capsule.id}" data-count="10" ${isDrawing ? "disabled" : ""}>10회 뽑기</button>
