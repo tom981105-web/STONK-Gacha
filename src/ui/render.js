@@ -34,6 +34,7 @@ const ROUTES = {
   arcade: "../STONK-Arcade/index.html",
   board: "../STONK-Board/index.html",
   wiki: "../STONK-Wiki/index.html",
+  bank: "../STONK-Bank/index.html",
   admin: "../STONK-Admin/market-admin.html"
 };
 const ADMIN_UID = "yaV8N60yIiUggaWNpNF2VhkCwxb2"; // 이 계정에게만 관리자 페이지 버튼 노출
@@ -279,6 +280,7 @@ function renderStatusBar(stats) {
         <a class="nav-link" href="${withRoom(ROUTES.board)}">주식소식</a>
         <a class="nav-link" href="${withRoom(ROUTES.wiki)}">주식정보</a>
         <a class="nav-link" href="${withRoom(ROUTES.arcade)}">아케이드</a>
+        <a class="nav-link" href="${withRoom(ROUTES.bank)}">은행</a>
         ${user && user.uid === ADMIN_UID ? `<a class="nav-link" href="${withRoom(ROUTES.admin)}">관리자 페이지</a>` : ""}
       </nav>
       <div class="status-cluster">
