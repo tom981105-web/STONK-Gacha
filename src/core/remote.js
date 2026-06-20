@@ -121,6 +121,31 @@ export function saveRoomCode(code) {
 
 const P = (roomCode, uid) => `rooms/${roomCode}/players/${uid}`;
 
+// v2.5: Gacha 폭망 보호권 실연동.
+// 10회 뽑기에서 Epic 이상 0개 또는 Common 8개 이상이고 활성 'gacha' 보험이 있으면 Dust +300(1회).
+// 결과/확률/천장은 건드리지 않고, 정산 후 Dust 보상만 추가. 실패해도 뽑기는 정상 진행되도록 방어.
+export async function claimGachaGuard(roomCode, uid, grades) {
+  try {
+    if (!Array.isArray(grades) || grades.length < 10) return 0;
+    const epicPlus = grades.filter((g) => g === "Epic" || g === "Legendary" || g === "Mythic").length;
+    const commons = grades.filter((g) => g === "Common").length;
+    if (!(epicPlus === 0 || commons >= 8)) return 0;
+    const { db } = getFirebase();
+    const now = Date.now();
+    const bankSnap = await get(ref(db, `rooms/${roomCode}/bank/${uid}`));
+    const inss = (bankSnap.val() || {}).insurances || {};
+    const entry = Object.entries(inss).find(([, i]) => i && i.type === "gacha" && i.status === "active" && !i.usedAt && Number(i.expiresAt || 0) > now);
+    if (!entry) return 0;
+    const [insId] = entry;
+    const reward = 300;
+    await runTransaction(ref(db, `${P(roomCode, uid)}/dust`), (d) => Math.max(0, Math.trunc(Number(d || 0))) + reward);
+    await update(ref(db, `rooms/${roomCode}/bank/${uid}/insurances/${insId}`), { status: "used", usedAt: now });
+    await push(ref(db, `rooms/${roomCode}/bank/${uid}/tx`), { type: "insurance_used", title: "Gacha 폭망 보호권 적용", amount: reward, beforeCash: 0, afterCash: 0, memo: "10회 뽑기 결과 보호 보상 Dust 지급", createdAt: now });
+    await push(ref(db, `rooms/${roomCode}/bank/${uid}/messages`), { type: "insurance", title: "Gacha 보호권 사용됨", body: "10회 뽑기 결과 조건 충족으로 Dust 300이 지급되었습니다.", amount: reward, relatedId: "insused-" + insId, read: false, actionLabel: "", actionUrl: "", createdAt: now });
+    return reward;
+  } catch (e) { console.warn("[gacha] 보호권 처리 실패:", e); return -1; }
+}
+
 // v2.0: 은행 대출 상태 1회 조회(표시 전용). 가챠 로직에는 영향 없음.
 export async function loadBankLoan(roomCode, uid) {
   try {

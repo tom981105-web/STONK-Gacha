@@ -808,6 +808,14 @@ async function handleDraw(capsuleId, count, opts = {}) {
   remote.pushGachaLog(roomCode, logEntry);
   roomLogs = [{ ...logEntry, createdAt: Date.now() }, ...roomLogs].slice(0, 20);
 
+  // v2.5: 10회 뽑기 폭망 보호권 자동 적용(결과/확률/천장 불변, Dust 보상만 추가)
+  try {
+    const grades = result.results.map((r) => r.item.grade);
+    const guard = await remote.claimGachaGuard(roomCode, user.uid, grades);
+    if (guard > 0) { state.dust = (state.dust || 0) + guard; saveState(state); showToast(`🛡️ Gacha 폭망 보호권 적용: Dust ${guard} 지급`, "success"); }
+    else if (guard < 0) { showToast("보험 적용 확인 실패", "danger"); }
+  } catch (e) { console.warn(e); }
+
   renderApp();
   revealThenShow(result);
 }
