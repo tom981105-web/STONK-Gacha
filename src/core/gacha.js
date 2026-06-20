@@ -10,14 +10,14 @@ export const SERIES = [
     subtitle: "STONK 세계관 배경화면 컬렉션",
     tone: "azure",
     emoji: "🖼️",
-    singleCost: 2000000,
-    tenCost: 20000000,
+    singleCost: 1000000,
+    tenCost: 10000000,
     rates: {
-      Common: 50,
-      Rare: 30,
-      Epic: 15,
-      Legendary: 4,
-      Mythic: 1
+      Common: 85,
+      Rare: 11,
+      Epic: 3.4,
+      Legendary: 0.5,
+      Mythic: 0.1
     }
   }
 ];
