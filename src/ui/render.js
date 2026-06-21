@@ -49,6 +49,19 @@ let isDrawing = false;
 let activeCapsuleId = null;
 let devClickCount = 0;
 let lastDrawRequest = { capsuleId: DEFAULT_SERIES, count: 1 };
+let payMethod = "cash"; // v2.9: cash | card
+function cardPayUI() {
+  const c = state.card;
+  if (!c || !c.enabled) return "";
+  const blocked = c.suspended;
+  const riskNote = state.bankLoan > 0 && payMethod === "card" ? " · ⚠️ 대출+카드 동시 사용 주의" : "";
+  return `<div class="pay-method">
+    <span class="pm-label">결제수단</span>
+    <button class="pm-opt ${payMethod === "cash" ? "on" : ""}" type="button" data-pay="cash">현금</button>
+    <button class="pm-opt ${payMethod === "card" ? "on" : ""} ${blocked ? "off" : ""}" type="button" data-pay="card" ${blocked ? "disabled" : ""}>STONK Card</button>
+    <small>${blocked ? "카드 정지" : `남은 한도 ${formatNumber(c.remaining)}${c.overdue ? " · 미납" : ""}`}${riskNote} <i>게임머니 신용결제</i></small>
+  </div>`;
+}
 
 // PHASE 2 원격 상태
 let roomCode = "";
@@ -104,6 +117,7 @@ async function boot(code) {
     player = await remote.loadGachaPlayer(roomCode, user.uid);
     mergeRemoteIntoState(player);
     state.bankLoan = await remote.loadBankLoan(roomCode, user.uid); // v2.0: 대출 경고 표시용(1회 조회)
+    state.card = await remote.loadCardStatus(roomCode, user.uid);   // v2.9: 카드 결제 옵션(1회 조회)
     roomLogs = await remote.loadGachaLogs(roomCode, 20);
     connection = "online";
     saveState(state);
@@ -352,6 +366,7 @@ function renderCapsule(capsule) {
           <span>10회 · ${formatNumber(capsule.tenCost)}</span>
         </div>
         ${state.bankLoan > 0 ? `<div class="loan-warning">⚠️ 현재 대출 잔액 <b>${formatNumber(state.bankLoan)}</b>이(가) 있습니다. 무리한 가챠는 신용등급에 영향을 줄 수 있습니다. <a href="${withRoom(ROUTES.bank)}">대출 상환하러 가기 →</a></div>` : ""}
+        ${cardPayUI()}
         <div class="capsule-actions">
           <button class="primary-button" type="button" data-draw="${capsule.id}" data-count="1" ${isDrawing ? "disabled" : ""}>1회 뽑기</button>
           <button class="primary-button strong" type="button" data-draw="${capsule.id}" data-count="10" ${isDrawing ? "disabled" : ""}>10회 뽑기</button>
@@ -681,6 +696,10 @@ function bindEvents() {
     });
   });
 
+  appRoot.querySelectorAll("[data-pay]").forEach((button) => {
+    button.addEventListener("click", () => { payMethod = button.dataset.pay; renderApp(); });
+  });
+
   appRoot.querySelector("[data-free-pull]")?.addEventListener("click", () => {
     handleDraw(DEFAULT_SERIES, 1, { free: true });
   });
@@ -782,18 +801,31 @@ async function handleDraw(capsuleId, count, opts = {}) {
   const cost = free ? 0 : getDrawCost(capsuleId, drawCount);
 
   let newCash;
-  try {
-    newCash = cost > 0 ? await remote.spendCash(roomCode, user.uid, cost, state.money) : state.money;
-  } catch (error) {
-    isDrawing = false;
-    activeCapsuleId = null;
-    renderApp();
-    sfx.fail();
-    showNotEnoughMoneyModal({ required: cost, current: state.money });
-    return;
+  let paidByCard = false;
+  // v2.9: 카드 결제 선택 시(무료뽑기 제외) — 결제 성공 후에만 뽑기 진행. 실패하면 뽑기 금지.
+  if (!free && cost > 0 && payMethod === "card" && state.card && state.card.enabled && !state.card.suspended) {
+    const charged = await remote.chargeCard(roomCode, user.uid, cost, "Gacha 결제");
+    if (charged > 0) { paidByCard = true; newCash = state.money; state.card.used += charged; state.card.remaining = Math.max(0, state.card.remaining - charged); }
+    else {
+      isDrawing = false; activeCapsuleId = null; renderApp(); sfx.fail();
+      showToast(charged === -2 ? "카드 한도 초과로 결제할 수 없습니다." : "카드가 정지/미발급 상태입니다.", "danger");
+      return;
+    }
+  } else {
+    try {
+      newCash = cost > 0 ? await remote.spendCash(roomCode, user.uid, cost, state.money) : state.money;
+    } catch (error) {
+      isDrawing = false;
+      activeCapsuleId = null;
+      renderApp();
+      sfx.fail();
+      showNotEnoughMoneyModal({ required: cost, current: state.money });
+      return;
+    }
   }
 
   const result = { ...recordDraw(state, capsuleId, items), cost };
+  if (paidByCard) showToast(`💳 STONK Card 결제 완료 (${formatNumber(cost)})`, "success");
   state.money = newCash;
   state.pity = roll.pity; // 천장 카운터 갱신
   if (free) state.freeClaimedDate = getTodayKey();
