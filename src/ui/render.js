@@ -53,13 +53,13 @@ let payMethod = "cash"; // v2.9: cash | card
 function cardPayUI() {
   const c = state.card;
   if (!c || !c.enabled) return "";
-  const blocked = c.suspended;
+  const blocked = c.suspended || c.lost;
   const riskNote = state.bankLoan > 0 && payMethod === "card" ? " · ⚠️ 대출+카드 동시 사용 주의" : "";
   return `<div class="pay-method">
     <span class="pm-label">결제수단</span>
     <button class="pm-opt ${payMethod === "cash" ? "on" : ""}" type="button" data-pay="cash">현금</button>
     <button class="pm-opt ${payMethod === "card" ? "on" : ""} ${blocked ? "off" : ""}" type="button" data-pay="card" ${blocked ? "disabled" : ""}>STONK Card</button>
-    <small>${blocked ? "카드 정지(결제 불가)" : `사용 ${formatNumber(c.used)} · 남은 한도 ${formatNumber(c.remaining)}${c.overdue ? " · ⚠️미납" : ""}`}${riskNote} · 카드 결제액은 <b>청구 예정</b> <i>게임머니 신용결제</i></small>
+    <small>${blocked ? (c.lost ? "분실 신고된 카드(결제 불가)" : "카드 정지(결제 불가)") : `사용 ${formatNumber(c.used)} · 남은 한도 ${formatNumber(c.remaining)}${c.overdue ? " · ⚠️미납" : ""}`}${riskNote} · 카드 결제액은 <b>청구 예정</b> <i>게임머니 신용결제</i></small>
   </div>`;
 }
 
@@ -804,9 +804,9 @@ async function handleDraw(capsuleId, count, opts = {}) {
   let paidByCard = false;
   // v2.95: 결제수단이 카드면 카드 성공 후에만 뽑기 진행 — 실패 시 현금 폴백 없이 중단.
   if (!free && cost > 0 && payMethod === "card") {
-    if (!state.card || !state.card.enabled || state.card.suspended) {
+    if (!state.card || !state.card.enabled || state.card.suspended || state.card.lost) {
       isDrawing = false; activeCapsuleId = null; renderApp(); sfx.fail();
-      showToast("STONK Card 결제에 실패했습니다. 결제수단을 현금으로 변경한 뒤 다시 시도해 주세요.", "danger");
+      showToast(state.card && state.card.lost ? "분실 신고된 카드입니다. 재발급 후 이용하거나 결제수단을 현금으로 변경해 주세요." : "STONK Card 결제에 실패했습니다. 결제수단을 현금으로 변경한 뒤 다시 시도해 주세요.", "danger");
       return;
     }
     const charged = await remote.chargeCard(roomCode, user.uid, cost, "Gacha 결제");
