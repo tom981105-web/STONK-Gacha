@@ -34,7 +34,19 @@ export const localStorageAdapter = {
     return window.localStorage.getItem(key);
   },
   write(key, value) {
-    window.localStorage.setItem(key, value);
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (e) {
+      // 용량 초과(QuotaExceededError) 등: 로컬 캐시는 보조 수단이고 원본은 Firebase 에 있으므로
+      // 키를 비워 공간을 확보한 뒤 1회 재시도하고, 그래도 실패하면 조용히 포기한다(앱은 계속 동작).
+      try {
+        window.localStorage.removeItem(key);
+        window.localStorage.setItem(key, value);
+      } catch (e2) {
+        try { window.localStorage.removeItem(key); } catch (_) {}
+        console.warn("[gacha] 로컬 캐시 저장 실패(용량 초과) — Firebase 데이터로 계속 진행합니다.", e2 && e2.name);
+      }
+    }
   },
   remove(key) {
     window.localStorage.removeItem(key);
@@ -61,6 +73,9 @@ export function normalizeState(rawState) {
   state.totalFused = toNumber(state.totalFused, 0);
   state.achievementsClaimed = Array.isArray(state.achievementsClaimed) ? state.achievementsClaimed : [];
   state.totalDraws = toNumber(state.totalDraws, state.history.length);
+  // history 는 newest-first 로 무한 누적되어 localStorage 용량 초과의 주원인이 된다.
+  // UI/경제 로직은 최근 10건 이내만 사용하므로 최근 100건으로 캡한다(totalDraws 집계 이후 적용).
+  if (state.history.length > 100) state.history = state.history.slice(0, 100);
   state.selectedFrame = normalizeSelected(state.selectedFrame);
   state.selectedTheme = normalizeSelected(state.selectedTheme);
   state.selectedSkin = normalizeSelected(state.selectedSkin);
