@@ -56,12 +56,23 @@ export function getFirebase() {
 }
 
 // PHASE 3: 익명 로그인을 만들지 않고 현재(또는 복원되는) 세션만 1회 확인.
+// onAuthStateChanged 가 끝내 발화하지 않아도 무한 대기하지 않도록 4초 폴백을 둔다.
 export function getCurrentUserOnce() {
   const { auth } = getFirebase();
   if (auth.currentUser) return Promise.resolve(auth.currentUser);
   return new Promise((resolve) => {
-    const unsub = onAuthStateChanged(auth, (u) => { unsub(); resolve(u || null); }, () => resolve(null));
+    let done = false;
+    const finish = (v) => { if (done) return; done = true; try { unsub(); } catch (_) {} resolve(v); };
+    const unsub = onAuthStateChanged(auth, (u) => finish(u || null), () => finish(null));
+    setTimeout(() => finish(auth.currentUser || null), 4000);
   });
+}
+
+// 네트워크 행(hang) 방지용 타임아웃 래퍼. ms 안에 끝나지 않으면 reject 한다.
+export function withTimeout(promise, ms, label) {
+  let t;
+  const guard = new Promise((_, rej) => { t = setTimeout(() => rej(new Error((label || "요청") + " 시간 초과")), ms); });
+  return Promise.race([promise, guard]).finally(() => clearTimeout(t));
 }
 
 // 기존 로그인 세션(=Battle 이메일 계정) 우선 재사용, 없으면 익명 로그인.

@@ -105,7 +105,8 @@ async function boot(code) {
 
     // PHASE 3: 기존 세션(Home/Battle 로그인) 우선. 세션이 없으면 Home 으로 안내(배포),
     // 개발 환경에서만 익명 로그인 허용(로컬 테스트용).
-    user = await remote.getCurrentUserOnce();
+    // 모든 네트워크 호출은 타임아웃으로 감싸 무한 "입장 중..." 멈춤을 방지한다.
+    user = await remote.withTimeout(remote.getCurrentUserOnce(), 6000, "로그인 확인");
     if (!user) {
       if (isLocalDev()) {
         user = await remote.ensureUser();
@@ -114,11 +115,13 @@ async function boot(code) {
         return;
       }
     }
-    player = await remote.loadGachaPlayer(roomCode, user.uid);
+    // 핵심 데이터(현금/인벤토리): 타임아웃 시 throw → 아래 catch 에서 연결 오류 처리.
+    player = await remote.withTimeout(remote.loadGachaPlayer(roomCode, user.uid), 10000, "플레이어 데이터 로딩");
     mergeRemoteIntoState(player);
-    state.bankLoan = await remote.loadBankLoan(roomCode, user.uid); // v2.0: 대출 경고 표시용(1회 조회)
-    state.card = await remote.loadCardStatus(roomCode, user.uid);   // v2.9: 카드 결제 옵션(1회 조회)
-    roomLogs = await remote.loadGachaLogs(roomCode, 20);
+    // 비핵심(표시 전용): 지연/실패해도 입장은 막지 않고 기본값으로 진행.
+    state.bankLoan = await remote.withTimeout(remote.loadBankLoan(roomCode, user.uid), 6000).catch(() => 0);
+    state.card = await remote.withTimeout(remote.loadCardStatus(roomCode, user.uid), 6000).catch(() => null);
+    roomLogs = await remote.withTimeout(remote.loadGachaLogs(roomCode, 20), 6000).catch(() => []);
     connection = "online";
     saveState(state);
   } catch (error) {
